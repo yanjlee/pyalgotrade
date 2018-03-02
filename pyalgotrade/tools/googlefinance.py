@@ -98,10 +98,8 @@ def build_feed(instruments, fromYear, toYear, storage, frequency=bar.Frequency.D
                     "Downloading {instrument} {year} to {filename}".format(
                         instrument=instrument, year=year, filename=fileName))
                 try:
-                    if frequency == bar.Frequency.DAY:
-                        download_daily_bars(instrument, year, fileName)
-                    else:
-                        raise Exception("Invalid frequency")
+                    assert frequency == bar.Frequency.DAY, "Invalid frequency"
+                    download_daily_bars(instrument, year, fileName)
                 except Exception, e:
                     if skipErrors:
                         logger.error(str(e))

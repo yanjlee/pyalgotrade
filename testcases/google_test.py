@@ -20,6 +20,8 @@
 
 import os
 import datetime
+import tempfile
+import shutil
 
 import common
 
@@ -69,8 +71,10 @@ class ToolsTestCase(common.TestCase):
             self.assertEqual(bf[instrument][-1].getOpen(), 31.22)
             self.assertEqual(bf[instrument][-1].getClose(), 31.30)
 
-    def testBuildDailyFeed(self):
-        with common.TmpDir() as tmpPath:
+    def testBuildDailyFeedCreatingDir(self):
+        tmpPath = tempfile.mkdtemp()
+        shutil.rmtree(tmpPath)
+        try:
             instrument = "nyse:orcl"
             bf = googlefinance.build_feed([instrument], 2010, 2010, storage=tmpPath)
             bf.loadAll()
@@ -82,6 +86,8 @@ class ToolsTestCase(common.TestCase):
             self.assertEqual(bf[instrument][-1].getDateTime(), datetime.datetime(2010, 12, 31))
             self.assertEqual(bf[instrument][-1].getOpen(), 31.22)
             self.assertEqual(bf[instrument][-1].getClose(), 31.30)
+        finally:
+            shutil.rmtree(tmpPath)
 
     def testInvalidInstrument(self):
         instrument = "inexistent"
@@ -98,3 +104,11 @@ class ToolsTestCase(common.TestCase):
             )
             bf.loadAll()
             self.assertNotIn(instrument, bf)
+
+    def testInvalidFrequency(self):
+        instrument = "nyse:orcl"
+
+        with self.assertRaisesRegexp(Exception, "Invalid frequency"):
+            with common.TmpDir() as tmp_path:
+                googlefinance.build_feed([instrument], 2010, 2010, storage=tmp_path, frequency=bar.Frequency.SECOND)
+
